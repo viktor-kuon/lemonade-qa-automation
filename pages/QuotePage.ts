@@ -190,7 +190,7 @@ export class QuotePage {
 
   async getMonthlyPremiumCents(): Promise<number> {
     const text = (await this.premium.innerText()).trim();
-    const match = /^Pay \$([\d,]+)\.(\d{2})\s*\/\s*month$/i.exec(text);
+    const match = /^Pay \$(\d+|\d{1,3}(?:,\d{3})+)\.(\d{2})\s*\/\s*month$/i.exec(text);
 
     if (!match) {
       throw new Error(
