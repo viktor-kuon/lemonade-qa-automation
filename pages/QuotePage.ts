@@ -2,16 +2,20 @@ import type { Locator, Page } from '@playwright/test';
 
 export class QuotePage {
   readonly personalPropertyCoverage: Locator;
+  readonly personalLiabilityCoverage: Locator;
 
   private readonly premium: Locator;
   private readonly personalPropertyCard: Locator;
+  private readonly personalLiabilityCard: Locator;
 
   constructor(private readonly page: Page) {
     this.premium = page.locator('#gtm_button_pay_main');
-    this.personalPropertyCard = page
-      .getByRole('heading', { name: 'Personal Property', exact: true })
-      .locator('..');
+    this.personalPropertyCard = this.getCoverageCard('Personal Property');
     this.personalPropertyCoverage = this.personalPropertyCard.getByLabel('input-value', {
+      exact: true,
+    });
+    this.personalLiabilityCard = this.getCoverageCard('Personal Liability');
+    this.personalLiabilityCoverage = this.personalLiabilityCard.getByLabel('input-value', {
       exact: true,
     });
   }
@@ -41,6 +45,14 @@ export class QuotePage {
     await this.personalPropertyCard.getByRole('button', { name: 'increase', exact: true }).click();
   }
 
+  async increasePersonalLiabilityCoverage(): Promise<void> {
+    await this.personalLiabilityCard.getByRole('button', { name: 'increase', exact: true }).click();
+  }
+
+  async decreasePersonalLiabilityCoverage(): Promise<void> {
+    await this.personalLiabilityCard.getByRole('button', { name: 'decrease', exact: true }).click();
+  }
+
   async getMonthlyPremiumCents(): Promise<number> {
     const text = (await this.premium.innerText()).trim();
     const match = /^Pay \$([\d,]+)\.(\d{2})\s*\/\s*month$/i.exec(text);
@@ -59,5 +71,9 @@ export class QuotePage {
     }
 
     return cents;
+  }
+
+  private getCoverageCard(name: string): Locator {
+    return this.page.getByRole('heading', { name, exact: true }).locator('..');
   }
 }
