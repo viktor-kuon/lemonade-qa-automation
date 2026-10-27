@@ -9,6 +9,8 @@ export class QuotePage {
   readonly jewelryCoverageAmount: Locator;
   readonly equipmentBreakdownCheckbox: Locator;
   readonly selectedDeductible: Locator;
+  readonly spouseCheckbox: Locator;
+  readonly spouseDetails: Locator;
 
   private readonly premium: Locator;
   private readonly personalPropertyCard: Locator;
@@ -16,6 +18,8 @@ export class QuotePage {
   private readonly jewelryDialog: Locator;
   private readonly equipmentBreakdownControl: Locator;
   private readonly deductibleSection: Locator;
+  private readonly spouseControl: Locator;
+  private readonly spouseDialog: Locator;
 
   constructor(private readonly page: Page) {
     this.premium = page.locator('#gtm_button_pay_main');
@@ -54,6 +58,16 @@ export class QuotePage {
       has: page.getByRole('heading', { name: 'Deductible', exact: true }),
     });
     this.selectedDeductible = this.deductibleSection.getByTestId('select-header');
+
+    const spouse = page.getByRole('heading', { name: 'Spouse', exact: true })
+      .locator('..')
+      .locator('..');
+    this.spouseCheckbox = spouse.getByRole('checkbox', { name: 'Toggle', exact: true });
+    this.spouseDetails = spouse.getByRole('button', { name: 'delete', exact: true }).locator('..');
+    this.spouseControl = spouse.locator('label');
+    this.spouseDialog = page.locator('dialog').filter({
+      has: page.getByRole('heading', { name: 'Add your spouse', exact: true }),
+    });
   }
 
   async goto(): Promise<void> {
@@ -126,6 +140,52 @@ export class QuotePage {
   async selectDeductible(amount: string): Promise<void> {
     await this.selectedDeductible.click();
     await this.deductibleSection.getByRole('option', { name: amount, exact: true }).click();
+  }
+
+  async addSpouse(firstName: string, lastName: string): Promise<void> {
+    await this.spouseControl.click();
+    await this.spouseDialog.getByRole('textbox', { name: 'First name', exact: true }).fill(firstName);
+    await this.spouseDialog.getByRole('textbox', { name: 'Last name', exact: true }).fill(lastName);
+    await this.spouseDialog.getByRole('textbox', { name: 'Email (optional)', exact: true }).fill('');
+
+    const saved = this.page.waitForResponse(response =>
+      response.request().method() === 'POST' &&
+      new URL(response.url()).pathname.endsWith('/addon') &&
+      response.request().postDataJSON()?.type === 'secondary_insured',
+    );
+    await this.spouseDialog.getByRole('button', { name: 'Add', exact: true }).click();
+    const response = await saved;
+    if (response.status() !== 200) {
+      throw new Error(`Saving Spouse failed: POST /addon returned HTTP ${response.status()}`);
+    }
+    const acknowledgement = await response.json();
+    if (acknowledgement.ok !== true) {
+      throw new Error('Saving Spouse was not acknowledged by POST /addon');
+    }
+    await this.spouseDialog.waitFor({ state: 'hidden' });
+  }
+
+  async removeSpouse(): Promise<void> {
+    await this.spouseControl.click();
+    const confirmation = this.page.locator('dialog').filter({
+      hasText: 'This will remove them from your policy',
+    });
+    const removed = this.page.waitForResponse(response => {
+      const url = new URL(response.url());
+      return response.request().method() === 'DELETE' &&
+        url.pathname.endsWith('/addon') &&
+        url.searchParams.get('type') === 'secondary_insured';
+    });
+    await confirmation.getByRole('button', { name: 'Yes', exact: true }).click();
+    const response = await removed;
+    if (response.status() !== 200) {
+      throw new Error(`Removing Spouse failed: DELETE /addon returned HTTP ${response.status()}`);
+    }
+    const acknowledgement = await response.json();
+    if (acknowledgement.ok !== true) {
+      throw new Error('Removing Spouse was not acknowledged by DELETE /addon');
+    }
+    await confirmation.waitFor({ state: 'hidden' });
   }
 
   async getMonthlyPremiumCents(): Promise<number> {
