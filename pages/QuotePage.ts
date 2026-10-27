@@ -7,11 +7,13 @@ export class QuotePage {
   readonly jewelryDeleteButton: Locator;
   readonly jewelryValueInput: Locator;
   readonly jewelryCoverageAmount: Locator;
+  readonly equipmentBreakdownCheckbox: Locator;
 
   private readonly premium: Locator;
   private readonly personalPropertyCard: Locator;
   private readonly personalLiabilityCard: Locator;
   private readonly jewelryDialog: Locator;
+  private readonly equipmentBreakdownControl: Locator;
 
   constructor(private readonly page: Page) {
     this.premium = page.locator('#gtm_button_pay_main');
@@ -35,6 +37,16 @@ export class QuotePage {
       name: 'input-field',
       exact: true,
     });
+
+    const equipmentBreakdown = page
+      .getByRole('heading', { name: 'Appliance (a.k.a. Equipment) Breakdown', exact: true })
+      .locator('..')
+      .locator('..');
+    this.equipmentBreakdownCheckbox = equipmentBreakdown.getByRole('checkbox', {
+      name: 'Toggle',
+      exact: true,
+    });
+    this.equipmentBreakdownControl = equipmentBreakdown.locator('label');
   }
 
   async goto(): Promise<void> {
@@ -86,6 +98,19 @@ export class QuotePage {
     await this.jewelryDeleteButton.click();
     const confirmation = this.page.locator('dialog').filter({
       hasText: 'Remove this Extra Coverage?',
+    });
+    await confirmation.getByRole('button', { name: 'Yes', exact: true }).click();
+    await confirmation.waitFor({ state: 'hidden' });
+  }
+
+  async enableEquipmentBreakdown(): Promise<void> {
+    await this.equipmentBreakdownControl.click();
+  }
+
+  async disableEquipmentBreakdown(): Promise<void> {
+    await this.equipmentBreakdownControl.click();
+    const confirmation = this.page.locator('dialog').filter({
+      hasText: 'This will remove them from your policy',
     });
     await confirmation.getByRole('button', { name: 'Yes', exact: true }).click();
     await confirmation.waitFor({ state: 'hidden' });
