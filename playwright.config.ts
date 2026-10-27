@@ -18,5 +18,10 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
+    {
+      name: 'pixel-7',
+      use: { ...devices['Pixel 7'] },
+      testMatch: ['**/personal-property.spec.ts', '**/jewelry.spec.ts'],
+    },
   ],
 });
