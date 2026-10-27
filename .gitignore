@@ -1,0 +1,22 @@
+
+# Dependencies
+node_modules/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Generated and local files
+*.tsbuildinfo
+*.log
+.DS_Store
+.idea/
+.vscode/
