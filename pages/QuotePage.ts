@@ -1,10 +1,19 @@
 import type { Locator, Page } from '@playwright/test';
 
 export class QuotePage {
+  readonly personalPropertyCoverage: Locator;
+
   private readonly premium: Locator;
+  private readonly personalPropertyCard: Locator;
 
   constructor(private readonly page: Page) {
     this.premium = page.locator('#gtm_button_pay_main');
+    this.personalPropertyCard = page
+      .getByRole('heading', { name: 'Personal Property', exact: true })
+      .locator('..');
+    this.personalPropertyCoverage = this.personalPropertyCard.getByLabel('input-value', {
+      exact: true,
+    });
   }
 
   async goto(): Promise<void> {
@@ -22,6 +31,14 @@ export class QuotePage {
       await dialog.getByRole('button', { name: 'Reject all', exact: true }).click();
       await dialog.waitFor({ state: 'hidden' });
     }
+  }
+
+  async decreasePersonalPropertyCoverage(): Promise<void> {
+    await this.personalPropertyCard.getByRole('button', { name: 'decrease', exact: true }).click();
+  }
+
+  async increasePersonalPropertyCoverage(): Promise<void> {
+    await this.personalPropertyCard.getByRole('button', { name: 'increase', exact: true }).click();
   }
 
   async getMonthlyPremiumCents(): Promise<number> {
