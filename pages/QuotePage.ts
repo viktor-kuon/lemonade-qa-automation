@@ -8,12 +8,14 @@ export class QuotePage {
   readonly jewelryValueInput: Locator;
   readonly jewelryCoverageAmount: Locator;
   readonly equipmentBreakdownCheckbox: Locator;
+  readonly selectedDeductible: Locator;
 
   private readonly premium: Locator;
   private readonly personalPropertyCard: Locator;
   private readonly personalLiabilityCard: Locator;
   private readonly jewelryDialog: Locator;
   private readonly equipmentBreakdownControl: Locator;
+  private readonly deductibleSection: Locator;
 
   constructor(private readonly page: Page) {
     this.premium = page.locator('#gtm_button_pay_main');
@@ -47,6 +49,11 @@ export class QuotePage {
       exact: true,
     });
     this.equipmentBreakdownControl = equipmentBreakdown.locator('label');
+
+    this.deductibleSection = page.getByRole('article').filter({
+      has: page.getByRole('heading', { name: 'Deductible', exact: true }),
+    });
+    this.selectedDeductible = this.deductibleSection.getByTestId('select-header');
   }
 
   async goto(): Promise<void> {
@@ -114,6 +121,11 @@ export class QuotePage {
     });
     await confirmation.getByRole('button', { name: 'Yes', exact: true }).click();
     await confirmation.waitFor({ state: 'hidden' });
+  }
+
+  async selectDeductible(amount: string): Promise<void> {
+    await this.selectedDeductible.click();
+    await this.deductibleSection.getByRole('option', { name: amount, exact: true }).click();
   }
 
   async getMonthlyPremiumCents(): Promise<number> {
